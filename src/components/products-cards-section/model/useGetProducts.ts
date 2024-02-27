@@ -26,9 +26,7 @@ export const useGetProducts = ({ filter }: { filter: IProductsFilter }) => {
     } : {
       action: 'filter',
       params: {
-        [filter.field]: filter.value,
-        offset,
-        limit: QUERY_IDS_LIMIT,
+        [filter.field]: filter.field === 'price' ? Number(filter.value) : filter.value,
       },
     })
       .then(response => {
@@ -45,11 +43,20 @@ export const useGetProducts = ({ filter }: { filter: IProductsFilter }) => {
         api.post<GetProductResponse>('', {
           action: 'get_items',
           params: {
-            ids: filteredIds.slice(0, MAX_CARDS_ON_SCREEN),
+            ids: filter.field === 'all' ?
+              filteredIds.slice(0, MAX_CARDS_ON_SCREEN) : filteredIds.slice(offset, MAX_CARDS_ON_SCREEN + offset),
           },
         })
           .then(response => {
-            setProducts(response.data.result);
+            const filteredProducts = response.data.result.reduce((acc: Product[], product: Product) => {
+              if (!acc.find(filteredProduct => filteredProduct.id === product.id)) {
+                acc.push(product);
+              }
+
+              return acc;
+            }, []);
+
+            setProducts(filteredProducts);
             setQueryStatus('success');
           })
           .catch(error => {
@@ -67,13 +74,12 @@ export const useGetProducts = ({ filter }: { filter: IProductsFilter }) => {
 
   const handlePrevPage = () => {
     setOffset(prev => prev - MAX_CARDS_ON_SCREEN);
-
   };
 
   return {
     queryStatus,
     products,
-    isNextPageAvailable: ids.length > MAX_CARDS_ON_SCREEN,
+    isNextPageAvailable: filter.field === 'all' ? ids.length > MAX_CARDS_ON_SCREEN : ids.length - offset > MAX_CARDS_ON_SCREEN,
     isPrevPageAvailable: offset > 0,
     handleNextPage,
     handlePrevPage,
