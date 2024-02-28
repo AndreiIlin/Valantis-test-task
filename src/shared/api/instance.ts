@@ -10,7 +10,7 @@ interface CustomAxiosRequestConfig extends AxiosRequestConfig {
 }
 
 export const api = axios.create({
-  baseURL: 'http://api.valantis.store:40000/',
+  baseURL: 'https://api.valantis.store:41000/',
   headers: {
     'X-Auth': getAuthHeaderValue(),
   },
